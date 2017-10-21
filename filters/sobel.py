@@ -12,8 +12,9 @@ class Sobel:
         self.image = Image.open(path)
         self.width, self.height = self.image.size
         self.raw = self.image.load()
-        self.data = np.zeros((self.height, self.width, 3), dtype=np.uint8)
-        self.output = np.zeros((self.height - 2, self.width - 2, 3), dtype=np.uint8)
+        self.data = np.zeros((self.height, self.width, 3), dtype=np.dtype('f8'))
+        self.output = np.zeros((self.height, self.width, 3), dtype=np.dtype('f8'))
+        self.display = np.zeros((self.height - 2, self.width - 2, 3), dtype=np.uint8)
 
     @staticmethod
     def __luminosity__(rgb):
@@ -33,33 +34,79 @@ class Sobel:
             for y in xrange(0, self.height):
                 self.data[y, x] = scale(self.raw[x, y])
 
-    def __edge_x__(self, kernel=None):
+    def __edge_x__(self, kernel):
 
-        if kernel is None:
-            kernel = self.kernel
+        for x in xrange(1 , self.width - 1):
+            for y in xrange(1 , self.height - 1):
+                self.output[y-1, x -1] = (self.data[y-1, x-1] * -1) + (self.data[y-1, x-0] * 0) + (self.data[y-1, x+1] * 1) + \
+                                        (self.data[y-0, x-1] * -2) + (self.data[y-0, x-0] * 0) + (self.data[y-0, x+1] * 2) + \
+                                        (self.data[y+1, x-1] * -1) + (self.data[y+1, x-0] * 0) + (self.data[y+1, x+1] * 1)
+
+        print np.amax(self.output)
+        print np.amin(self.output)
+
+        factor = abs(np.amax(self.output)) + abs(np.amin(self.output))
+
+        for x in xrange(0 , self.width):
+            for y in xrange(0 , self.height):
+                self.output[y, x] = (self.output[y, x] - np.amin(self.output)) / factor * 255
+                self.output[y, x] = self.output[y, x].astype(int)
+
+
+    def __blur__(self):
+
+        for x in xrange(1 , self.width - 1):
+            for y in xrange(1 , self.height - 1):
+                self.data[y-1, x -1] = (self.data[y-1, x-1] / 16) + (self.data[y-1, x-0] / 8) + (self.data[y-1, x+1] / 16) + \
+                                        (self.data[y-0, x-1] / 8) + (self.data[y-0, x-0] / 4) + (self.data[y-0, x+1] / 8) + \
+                                        (self.data[y+1, x-1] / 16) + (self.data[y+1, x-0] / 8) + (self.data[y+1, x+1] / 16)
+
 
     def edge_x(self, kernel=None):
 
         # TODO: error checking for kernel
 
-        if kernel is None:
-            pass
+        if kernel == None:
+            self.__edge_x__(self.kernel)
+        else:
+            self.__edge_x__(kernel)
 
-
-    def grayscale(self, mode):
+    def grayscale(self, mode=None):
         if mode == None:
             mode = 'lum'
 
         if mode == 'lum':
-            self.__grayscale__(self, self.__luminosity__)
+            self.__grayscale__(self.__luminosity__)
         elif mode == 'avg':
-            self.__grayscale__(self, self.__average__)
+            self.__grayscale__(self.__average__)
         elif mode == 'lht':
-            self.__grayscale__(self, self.__lightness__)
+            self.__grayscale__(self.__lightness__)
         else:
             pass
             # TODO: error handling
 
+    def __show__(self, o):
+
+        for x in xrange(0, self.width - 2):
+            for y in xrange(0, self.height - 2):
+                self.display[y, x] = o[y, x].astype(int)
+
+        img = Image.fromarray(self.display, 'RGB')
+        img.show()
+
+        #
+        # img = Image.fromarray(self.display, 'RGB')
+        # img.show()
+        #
+        # for x in o:
+        #     print x
+        #     break
+        #
+        # for x in o.astype(int):
+        #     print x
+        #     break
+
+
     def show(self):
-        img = Image.fromarray(self.data, 'RGB')
+        img = Image.fromarray(self.display, 'RGB')
         img.show()
