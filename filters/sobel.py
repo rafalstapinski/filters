@@ -12,9 +12,10 @@ class Sobel:
         self.image = Image.open(path)
         self.width, self.height = self.image.size
         self.raw = self.image.load()
-        self.data = np.zeros((self.height, self.width, 3), dtype=np.dtype('f8'))
-        self.output = np.zeros((self.height, self.width, 3), dtype=np.dtype('f8'))
-        self.display = np.zeros((self.height - 2, self.width - 2, 3), dtype=np.uint8)
+        self.data = np.zeros((self.height, self.width), dtype=np.dtype('f8'))
+        self.x = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
+        self.y = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
+        self.output = np.zeros((self.height - 2, self.width - 2), dtype=np.uint8)
 
     @staticmethod
     def __luminosity__(rgb):
@@ -34,23 +35,32 @@ class Sobel:
             for y in xrange(0, self.height):
                 self.data[y, x] = scale(self.raw[x, y])
 
-    def __edge_x__(self, kernel):
+    def __channel__(self, i):
+        for x in xrange(0 , self.width):
+            for y in xrange(0 , self.height):
+                self.data[y, x] = self.raw[x, y][i]
+
+    def __edge_x__(self, k):
 
         for x in xrange(1 , self.width - 1):
             for y in xrange(1 , self.height - 1):
-                self.output[y-1, x -1] = (self.data[y-1, x-1] * -1) + (self.data[y-1, x-0] * 0) + (self.data[y-1, x+1] * 1) + \
-                                        (self.data[y-0, x-1] * -2) + (self.data[y-0, x-0] * 0) + (self.data[y-0, x+1] * 2) + \
-                                        (self.data[y+1, x-1] * -1) + (self.data[y+1, x-0] * 0) + (self.data[y+1, x+1] * 1)
+                self.x[y-1, x -1] = (self.data[y-1, x-1] * k[0][0]) + (self.data[y-1, x-0] * k[0][1]) + (self.data[y-1, x+1] * k[0][2]) + \
+                                        (self.data[y-0, x-1] * k[1][0]) + (self.data[y-0, x-0] * k[1][1]) + (self.data[y-0, x+1] * k[1][2]) + \
+                                        (self.data[y+1, x-1] * k[2][0]) + (self.data[y+1, x-0] * k[2][1]) + (self.data[y+1, x+1] * k[2][2])
 
-        print np.amax(self.output)
-        print np.amin(self.output)
+        factor = abs(np.amax(self.x)) + abs(np.amin(self.x))
+        self.x = (self.x - np.amin(self.x)) / factor * 255
 
-        factor = abs(np.amax(self.output)) + abs(np.amin(self.output))
+    def __edge_y__(self, k):
 
-        for x in xrange(0 , self.width):
-            for y in xrange(0 , self.height):
-                self.output[y, x] = (self.output[y, x] - np.amin(self.output)) / factor * 255
-                self.output[y, x] = self.output[y, x].astype(int)
+        for x in xrange(1 , self.width - 1):
+            for y in xrange(1 , self.height - 1):
+                self.y[y-1, x -1] = (self.data[y-1, x-1] * k[0][0]) + (self.data[y-1, x-0] * k[0][1]) + (self.data[y-1, x+1] * k[0][2]) + \
+                                        (self.data[y-0, x-1] * k[1][0]) + (self.data[y-0, x-0] * k[1][1]) + (self.data[y-0, x+1] * k[1][2]) + \
+                                        (self.data[y+1, x-1] * k[2][0]) + (self.data[y+1, x-0] * k[2][1]) + (self.data[y+1, x+1] * k[2][2])
+
+        factor = abs(np.amax(self.y)) + abs(np.amin(self.y))
+        self.y = (self.y - np.amin(self.y)) / factor * 255
 
 
     def __blur__(self):
@@ -62,14 +72,47 @@ class Sobel:
                                         (self.data[y+1, x-1] / 16) + (self.data[y+1, x-0] / 8) + (self.data[y+1, x+1] / 16)
 
 
-    def edge_x(self, kernel=None):
+    def calc_x(self, kernel=None):
 
         # TODO: error checking for kernel
 
         if kernel == None:
-            self.__edge_x__(self.kernel)
-        else:
-            self.__edge_x__(kernel)
+            kernel = ((-1, 0, 1),
+                    (-2, 0, 2),
+                    (-1, 0, 1))
+
+        self.__edge_x__(kernel)
+
+        for x in xrange(0 , self.width - 2):
+            for y in xrange(0 , self.height - 2):
+                self.output[y, x] = self.x[y, x].astype(int)
+
+
+    def calc_y(self, kernel=None):
+
+        # TODO: error checking for kernel
+
+        if kernel == None:
+            kernel = ((-1, -2, -1),
+                    (0, 0, 0),
+                    (1, 2, 1))
+
+        self.__edge_y__(kernel)
+
+        for x in xrange(0 , self.width - 2):
+            for y in xrange(0 , self.height - 2):
+                self.output[y, x] = self.y[y, x].astype(int)
+
+
+    def calc(self):
+        self.calc_x()
+        self.calc_y()
+
+        a = np.sqrt(np.square(self.x) + np.square(self.y)) / 361 * 255
+        for x in xrange(0 , self.width - 2):
+            for y in xrange(0 , self.height - 2):
+                self.output[y, x] = a[y, x].astype(int)
+
 
     def grayscale(self, mode=None):
         if mode == None:
@@ -85,28 +128,25 @@ class Sobel:
             pass
             # TODO: error handling
 
-    def __show__(self, o):
 
-        for x in xrange(0, self.width - 2):
-            for y in xrange(0, self.height - 2):
-                self.display[y, x] = o[y, x].astype(int)
+    def channel(self, c):
 
-        img = Image.fromarray(self.display, 'RGB')
+        if c == 'R':
+            i = 0
+        elif c == 'G':
+            i = 1
+        elif c == 'B':
+            i = 2
+        else:
+            # TODO: error handling
+            pass
+
+        self.__channel__(i)
+
+    def show_d(self):
+        img = Image.fromarray(self.output, 'L')
         img.show()
 
-        #
-        # img = Image.fromarray(self.display, 'RGB')
-        # img.show()
-        #
-        # for x in o:
-        #     print x
-        #     break
-        #
-        # for x in o.astype(int):
-        #     print x
-        #     break
-
-
     def show(self):
-        img = Image.fromarray(self.display, 'RGB')
+        img = Image.fromarray(self.output, 'L')
         img.show()
