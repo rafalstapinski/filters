@@ -16,6 +16,7 @@ class Sobel:
         self.x = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
         self.y = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
         self.output = np.zeros((self.height - 2, self.width - 2), dtype=np.uint8)
+        self.pre = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
 
     @staticmethod
     def __luminosity__(rgb):
@@ -51,6 +52,17 @@ class Sobel:
         factor = abs(np.amax(self.x)) + abs(np.amin(self.x))
         self.x = (self.x - np.amin(self.x)) / factor * 255
 
+        avg = np.mean(self.x)
+
+        for x in xrange(0 , self.width - 2):
+            for y in xrange(0 , self.height - 2):
+                if self.x[y, x] < avg:
+                    self.x[y, x] += (2 * (avg-self.x[y, x]))
+
+        factor = abs(np.amax(self.x)) + abs(np.amin(self.x))
+        self.x = (self.x - np.amin(self.x)) / factor * 255
+
+
     def __edge_y__(self, k):
 
         for x in xrange(1 , self.width - 1):
@@ -58,6 +70,16 @@ class Sobel:
                 self.y[y-1, x -1] = (self.data[y-1, x-1] * k[0][0]) + (self.data[y-1, x-0] * k[0][1]) + (self.data[y-1, x+1] * k[0][2]) + \
                                         (self.data[y-0, x-1] * k[1][0]) + (self.data[y-0, x-0] * k[1][1]) + (self.data[y-0, x+1] * k[1][2]) + \
                                         (self.data[y+1, x-1] * k[2][0]) + (self.data[y+1, x-0] * k[2][1]) + (self.data[y+1, x+1] * k[2][2])
+
+        factor = abs(np.amax(self.y)) + abs(np.amin(self.y))
+        self.y = (self.y - np.amin(self.y)) / factor * 255
+
+        avg = np.mean(self.y)
+
+        for x in xrange(0 , self.width - 2):
+            for y in xrange(0 , self.height - 2):
+                if self.y[y, x] < avg:
+                    self.y[y, x] += (2 * (avg-self.y[y, x]))
 
         factor = abs(np.amax(self.y)) + abs(np.amin(self.y))
         self.y = (self.y - np.amin(self.y)) / factor * 255
@@ -111,7 +133,7 @@ class Sobel:
         a = np.sqrt(np.square(self.x) + np.square(self.y)) / 361 * 255
         for x in xrange(0 , self.width - 2):
             for y in xrange(0 , self.height - 2):
-                self.output[y, x] = a[y, x].astype(int)
+                self.output[y, x] = (a[y, x].astype(int) - 128 * 2)
 
 
     def grayscale(self, mode=None):
