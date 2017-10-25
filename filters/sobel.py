@@ -7,28 +7,33 @@ class Sobel:
 
         self.image = Image.open(path)
         self.width, self.height = self.image.size
-        self.data = np.array(self.image)
+        self.RGB_data = np.array(self.image)
+        self.ONE_data = np.zeros((self.height, self.width), dtype=np.uint8)
+        self.edge_data = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
+
+        return self
+
         # self.data = np.zeros((self.height, self.width), dtype=np.dtype('f8'))
         # self.edge = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
         # self.output = np.zeros((self.height - 2, self.width - 2), dtype=np.uint8)
 
     @staticmethod
-    def __luminosity__(rgb):
-        return (.21 * rgb[0]) + (.72 * rgb[1]) + (.07 * rgb[2])
+    def __luminosity__(r, g, b):
+        return (.21 * r) + (.72 * g) + (.07 * b)
 
     @staticmethod
-    def __average__(rgb):
-        return sum(rgb) / 3
+    def __average__(r, g, b):
+        return (r + g + b) / 3
 
     @staticmethod
-    def __lightness__(rgb):
-        return (max(rgb) + min(rgb)) / 2
+    def __lightness__(r, g, b):
+        return (max((r, g, b)) + min((r, g, b))) / 2
 
     def __grayscale__(self, scale):
 
-        for x in xrange(0, self.width):
-            for y in xrange(0, self.height):
-
+        for i in xrange(0, self.width):
+            for j in xrange(0, self.height):
+                pass
 
     def __channel__(self, i):
         for x in xrange(0 , self.width):
@@ -114,10 +119,43 @@ class Sobel:
                 self.output[y, x] = self.y[y, x].astype(int)
 
 
-    def calc(self, channel=None, Lcomp=None):
+    def __set_channel__(self, channel, comp):
+
+        if channel == 'L':
+            if comp == 'luminosity':
+                c = self.__luminosity__
+
+        # TODO: Investigate: is converting to float array better for quality
+
+        for j in xrange(0, self.width):
+            for i in xrange(0, self.height):
+                self.ONE_data.itemset((i, j), c(self.RGB_data.item(i, j, 0),
+                                                self.RGB_data.item(i, j, 1),
+                                                self.RGB_data.item(i, j, 2)))
 
 
-        pass
+
+
+    def edges(self, channel='L', comp='luminosity',
+            vk=[[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]],
+            hk=[[-1, -2, -1], [0, 0, 0], [1, 2, 1]]):
+
+            # TODO: check for square kernels
+
+            self.__set_channel__(channel, comp)
+
+            # TODO: estimate max min by applying max value, min value to kernels
+            # actually this would be static, assuming a drastic change of
+            # 255 to 0
+            # that would be 255 * 4 magnitude
+            # flat would be 0 magnitude
+            # check that out later performance wise vs finding all vals
+            # and then normalizing
+
+            for j in xrange(1, self.width - 1):
+                for i in xrange(1, self.height - 1):
+                    self.edge_data.itemset((i-1,j-1), )
+
 
     def grayscale(self, mode=None):
         if mode == None:
