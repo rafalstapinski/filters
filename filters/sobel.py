@@ -3,20 +3,14 @@ import numpy as np
 
 class Sobel:
 
-    def __init__(self):
-
-        self.kernel = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
-
     def open(self, path):
 
         self.image = Image.open(path)
         self.width, self.height = self.image.size
-        self.raw = self.image.load()
-        self.data = np.zeros((self.height, self.width), dtype=np.dtype('f8'))
-        self.x = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
-        self.y = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
-        self.output = np.zeros((self.height - 2, self.width - 2), dtype=np.uint8)
-        self.pre = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
+        self.data = np.array(self.image)
+        # self.data = np.zeros((self.height, self.width), dtype=np.dtype('f8'))
+        # self.edge = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
+        # self.output = np.zeros((self.height - 2, self.width - 2), dtype=np.uint8)
 
     @staticmethod
     def __luminosity__(rgb):
@@ -34,7 +28,7 @@ class Sobel:
 
         for x in xrange(0, self.width):
             for y in xrange(0, self.height):
-                self.data[y, x] = scale(self.raw[x, y])
+
 
     def __channel__(self, i):
         for x in xrange(0 , self.width):
@@ -48,9 +42,6 @@ class Sobel:
                 self.x[y-1, x -1] = (self.data[y-1, x-1] * k[0][0]) + (self.data[y-1, x-0] * k[0][1]) + (self.data[y-1, x+1] * k[0][2]) + \
                                         (self.data[y-0, x-1] * k[1][0]) + (self.data[y-0, x-0] * k[1][1]) + (self.data[y-0, x+1] * k[1][2]) + \
                                         (self.data[y+1, x-1] * k[2][0]) + (self.data[y+1, x-0] * k[2][1]) + (self.data[y+1, x+1] * k[2][2])
-
-        factor = abs(np.amax(self.x)) + abs(np.amin(self.x))
-        self.x = (self.x - np.amin(self.x)) / factor * 255
 
         avg = np.mean(self.x)
 
@@ -70,9 +61,6 @@ class Sobel:
                 self.y[y-1, x -1] = (self.data[y-1, x-1] * k[0][0]) + (self.data[y-1, x-0] * k[0][1]) + (self.data[y-1, x+1] * k[0][2]) + \
                                         (self.data[y-0, x-1] * k[1][0]) + (self.data[y-0, x-0] * k[1][1]) + (self.data[y-0, x+1] * k[1][2]) + \
                                         (self.data[y+1, x-1] * k[2][0]) + (self.data[y+1, x-0] * k[2][1]) + (self.data[y+1, x+1] * k[2][2])
-
-        factor = abs(np.amax(self.y)) + abs(np.amin(self.y))
-        self.y = (self.y - np.amin(self.y)) / factor * 255
 
         avg = np.mean(self.y)
 
@@ -126,15 +114,10 @@ class Sobel:
                 self.output[y, x] = self.y[y, x].astype(int)
 
 
-    def calc(self):
-        self.calc_x()
-        self.calc_y()
+    def calc(self, channel=None, Lcomp=None):
 
-        a = np.sqrt(np.square(self.x) + np.square(self.y)) / 361 * 255
-        for x in xrange(0 , self.width - 2):
-            for y in xrange(0 , self.height - 2):
-                self.output[y, x] = (a[y, x].astype(int) - 128 * 2)
 
+        pass
 
     def grayscale(self, mode=None):
         if mode == None:
