@@ -1,5 +1,6 @@
 from PIL import Image
 import numpy as np
+import math
 
 class Sobel:
 
@@ -154,7 +155,19 @@ class Sobel:
 
             for j in xrange(1, self.width - 1):
                 for i in xrange(1, self.height - 1):
-                    self.edge_data.itemset((i-1,j-1), )
+
+                    v = (self.ONE_data.item(i-1, j-1) * -1) + (self.ONE_data.item(i-0, j-1) * 0) + (self.ONE_data.item(i+1, j-1) * 1) + \
+                        (self.ONE_data.item(i-1, j-0) * -2) + (self.ONE_data.item(i-0, j-0) * 0) + (self.ONE_data.item(i+1, j-0) * 2) + \
+                        (self.ONE_data.item(i-1, j+1) * -1) + (self.ONE_data.item(i-0, j+1) * 0) + (self.ONE_data.item(i+1, j+1) * 1)
+
+                    h = (self.ONE_data.item(i-1, j-1) * -1) + (self.ONE_data.item(i-0, j-1) * -2) + (self.ONE_data.item(i+1, j-1) * -1) + \
+                        (self.ONE_data.item(i-1, j-0) * 0) + (self.ONE_data.item(i-0, j-0) * 0) + (self.ONE_data.item(i+1, j-0) * 0) + \
+                        (self.ONE_data.item(i-1, j+1) * 1) + (self.ONE_data.item(i-0, j+1) * 2) + (self.ONE_data.item(i+1, j+1) * 1)
+
+                    self.edge_data.itemset((i-1,j-1), int(math.sqrt(v*v + h*h)))
+
+            factor = abs(np.amax(self.edge_data)) + abs(np.amin(self.edge_data))
+            self.edge_data = (self.edge_data - np.amin(self.edge_data)) / factor
 
 
     def grayscale(self, mode=None):
@@ -191,5 +204,5 @@ class Sobel:
         img.show()
 
     def show(self):
-        img = Image.fromarray(self.output, 'L')
+        img = Image.fromarray(np.uint8(self.edge_data * 255), 'L')
         img.show()
