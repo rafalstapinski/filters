@@ -10,7 +10,7 @@ class Sobel:
         self.width, self.height = self.image.size
         self.RGB_data = np.array(self.image)
         self.ONE_data = np.zeros((self.height, self.width), dtype=np.uint8)
-        self.edge_data = np.zeros((self.height - 2, self.width - 2), dtype=np.dtype('f8'))
+        self.edge_data = np.zeros((self.height - 4, self.width - 4), dtype=np.dtype('f8'))
 
         return self
 
@@ -137,7 +137,7 @@ class Sobel:
 
 
 
-    def edges(self, channel='L', comp='luminosity',
+    def edges(self, channel='L', comp='luminosity', blur=False,
             vk=[[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]],
             hk=[[-1, -2, -1], [0, 0, 0], [1, 2, 1]]):
 
@@ -153,18 +153,67 @@ class Sobel:
             # check that out later performance wise vs finding all vals
             # and then normalizing
 
-            for j in xrange(1, self.width - 1):
-                for i in xrange(1, self.height - 1):
+            for j in xrange(2, self.width - 2):
+                for i in xrange(2, self.height - 2):
 
-                    v = (self.ONE_data.item(i-1, j-1) * -1) + (self.ONE_data.item(i-0, j-1) * 0) + (self.ONE_data.item(i+1, j-1) * 1) + \
-                        (self.ONE_data.item(i-1, j-0) * -2) + (self.ONE_data.item(i-0, j-0) * 0) + (self.ONE_data.item(i+1, j-0) * 2) + \
-                        (self.ONE_data.item(i-1, j+1) * -1) + (self.ONE_data.item(i-0, j+1) * 0) + (self.ONE_data.item(i+1, j+1) * 1)
+                    if blur:
 
-                    h = (self.ONE_data.item(i-1, j-1) * -1) + (self.ONE_data.item(i-0, j-1) * -2) + (self.ONE_data.item(i+1, j-1) * -1) + \
-                        (self.ONE_data.item(i-1, j-0) * 0) + (self.ONE_data.item(i-0, j-0) * 0) + (self.ONE_data.item(i+1, j-0) * 0) + \
-                        (self.ONE_data.item(i-1, j+1) * 1) + (self.ONE_data.item(i-0, j+1) * 2) + (self.ONE_data.item(i+1, j+1) * 1)
+                        ul = (self.ONE_data.item(i-2, j-2) / 16) + (self.ONE_data.item(i-1, j-2) / 8) + (self.ONE_data.item(i-0, j-2) / 16) + \
+                             (self.ONE_data.item(i-2, j-1) / 8) + (self.ONE_data.item(i-1, j-1) / 4) + (self.ONE_data.item(i-0, j-1) / 8) + \
+                             (self.ONE_data.item(i-2, j-0) / 16) + (self.ONE_data.item(i-1, j-0) / 8) + (self.ONE_data.item(i-0, j-0) / 16)
 
-                    self.edge_data.itemset((i-1,j-1), int(math.sqrt(v*v + h*h)))
+                        uc = (self.ONE_data.item(i-1, j-2) / 16) + (self.ONE_data.item(i-0, j-2) / 8) + (self.ONE_data.item(i+1, j-2) / 16) + \
+                             (self.ONE_data.item(i-1, j-1) / 8) + (self.ONE_data.item(i-0, j-1) / 4) + (self.ONE_data.item(i+1, j-1) / 8) + \
+                             (self.ONE_data.item(i-1, j-0) / 16) + (self.ONE_data.item(i-0, j-0) / 8) + (self.ONE_data.item(i+1, j-0) / 16)
+
+                        ur = (self.ONE_data.item(i-0, j-2) / 16) + (self.ONE_data.item(i+1, j-2) / 8) + (self.ONE_data.item(i+2, j-2) / 16) + \
+                             (self.ONE_data.item(i-0, j-1) / 8) + (self.ONE_data.item(i+1, j-1) / 4) + (self.ONE_data.item(i+2, j-1) / 8) + \
+                             (self.ONE_data.item(i-0, j-0) / 16) + (self.ONE_data.item(i+1, j-0) / 8) + (self.ONE_data.item(i+2, j-0) / 16)
+
+                        ml = (self.ONE_data.item(i-2, j-1) / 16) + (self.ONE_data.item(i-1, j-1) / 8) + (self.ONE_data.item(i-0, j-1) / 16) + \
+                             (self.ONE_data.item(i-2, j-0) / 8) + (self.ONE_data.item(i-1, j-0) / 4) + (self.ONE_data.item(i-0, j-0) / 8) + \
+                             (self.ONE_data.item(i-2, j+1) / 16) + (self.ONE_data.item(i-1, j+1) / 8) + (self.ONE_data.item(i-0, j+1) / 16)
+
+                        mc = (self.ONE_data.item(i-1, j-1) / 16) + (self.ONE_data.item(i-0, j-1) / 8) + (self.ONE_data.item(i+1, j-1) / 16) + \
+                             (self.ONE_data.item(i-1, j-0) / 8) + (self.ONE_data.item(i-0, j-0) / 4) + (self.ONE_data.item(i+1, j-0) / 8) + \
+                             (self.ONE_data.item(i-1, j+1) / 16) + (self.ONE_data.item(i-0, j+1) / 8) + (self.ONE_data.item(i+1, j+1) / 16)
+
+                        mr = (self.ONE_data.item(i-0, j-1) / 16) + (self.ONE_data.item(i+1, j-1) / 8) + (self.ONE_data.item(i+2, j-1) / 16) + \
+                             (self.ONE_data.item(i-0, j-0) / 8) + (self.ONE_data.item(i+1, j-0) / 4) + (self.ONE_data.item(i+2, j-0) / 8) + \
+                             (self.ONE_data.item(i-0, j+1) / 16) + (self.ONE_data.item(i+1, j+1) / 8) + (self.ONE_data.item(i+2, j+1) / 16)
+
+                        bl = (self.ONE_data.item(i-2, j+0) / 16) + (self.ONE_data.item(i-1, j+0) / 8) + (self.ONE_data.item(i-0, j+0) / 16) + \
+                             (self.ONE_data.item(i-2, j+1) / 8) + (self.ONE_data.item(i-1, j+1) / 4) + (self.ONE_data.item(i-0, j+1) / 8) + \
+                             (self.ONE_data.item(i-2, j+2) / 16) + (self.ONE_data.item(i-1, j+2) / 8) + (self.ONE_data.item(i-0, j+2) / 16)
+
+                        bc = (self.ONE_data.item(i-1, j+0) / 16) + (self.ONE_data.item(i-0, j+0) / 8) + (self.ONE_data.item(i+1, j+0) / 16) + \
+                             (self.ONE_data.item(i-1, j+1) / 8) + (self.ONE_data.item(i-0, j+1) / 4) + (self.ONE_data.item(i+1, j+1) / 8) + \
+                             (self.ONE_data.item(i-1, j+2) / 16) + (self.ONE_data.item(i-0, j+2) / 8) + (self.ONE_data.item(i+1, j+2) / 16)
+
+                        br = (self.ONE_data.item(i-0, j+0) / 16) + (self.ONE_data.item(i+1, j+0) / 8) + (self.ONE_data.item(i+2, j+0) / 16) + \
+                             (self.ONE_data.item(i-0, j+1) / 8) + (self.ONE_data.item(i+1, j+1) / 4) + (self.ONE_data.item(i+2, j+1) / 8) + \
+                             (self.ONE_data.item(i-0, j+2) / 16) + (self.ONE_data.item(i+1, j+2) / 8) + (self.ONE_data.item(i+2, j+2) / 16)
+
+                    else:
+                        ul = self.ONE_data.item(i-1, j-1)
+                        uc = self.ONE_data.item(i-0, j-1)
+                        ur = self.ONE_data.item(i+1, j-1)
+                        ml = self.ONE_data.item(i-1, j-0)
+                        mc = self.ONE_data.item(i-0, j-0)
+                        mr = self.ONE_data.item(i+1, j-0)
+                        bl = self.ONE_data.item(i-1, j+1)
+                        bc = self.ONE_data.item(i-0, j+1)
+                        br = self.ONE_data.item(i+1, j+1)
+
+                    v = (ul * -1) + (uc * 0) + (ur * 1) + \
+                        (ml * -2) + (mc * 0) + (mr * 2) + \
+                        (bl * -1) + (bc * 0) + (br * 1)
+
+                    h = (ul * -1) + (uc * -2) + (ur * -1) + \
+                        (ml * 0) + (mc * 0) + (mr * 0) + \
+                        (bl * 1) + (bc * 2) + (br * 1)
+
+                    self.edge_data.itemset((i-2,j-2), int(math.sqrt(v*v + h*h)))
 
             factor = abs(np.amax(self.edge_data)) + abs(np.amin(self.edge_data))
             self.edge_data = (self.edge_data - np.amin(self.edge_data)) / factor
