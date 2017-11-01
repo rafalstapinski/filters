@@ -1,5 +1,15 @@
 # Filters Library
 
-Decomposing popular image filters as a Python library.
+Decomposing popular image filters in Python.
 
-I'm mainly doing this as a fun experiment, but do let me know if my maths are wrong and feel free to use and modify.
+#### Currently implemented filters:
+* Sobel edge detection
+
+#### Planned:
+* Module to apply any specified kernel
+* Gaussian blur
+* Sharpening
+* Motion blur
+* Emboss
+* Mean and median
+* Move sobel here
